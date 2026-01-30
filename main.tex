@@ -1,0 +1,144 @@
+\documentclass[12pt,a4paper]{article}
+
+% ---------- Page layout ----------
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% ---------- Math packages ----------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+
+% ---------- Text & formatting ----------
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ---------- Graphics (for future figures) ----------
+\usepackage{graphicx}
+\usepackage{float}
+
+% ---------- Hyperlinks ----------
+\usepackage[hidelinks]{hyperref}
+
+% ---------- Better lists ----------
+\usepackage{enumitem}
+
+% ---------- Paragraph formatting ----------
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+\begin{document}
+
+% =====================================================
+\section{Introduction / Overview}
+
+The objective of this project is to demonstrate mastery of robotic perception concepts through the design and implementation of a simulated mobile robot operating in a physics-enabled environment. The final system will integrate computer vision, localization, mapping, and navigation to allow a robot to autonomously reach a goal while avoiding both static and dynamic obstacles.
+
+This report documents \textbf{Milestone 1}, which focuses on \textbf{computer vision}. At this stage, the robot uses a monocular camera to observe the environment and identify dynamic obstacles based on visual motion cues. The implementation emphasizes understanding and applying the underlying mathematical models of motion perception rather than relying on high-level computer vision libraries.
+
+The computer vision algorithms developed for this milestone are implemented in code and made publicly available for reference and reproducibility. The source code corresponding to the computer vision component of this project can be found in the following GitHub repository:
+
+\begin{center}
+\texttt{https://github.com/pepepepepordu/perception-of-cognitive-robot-project}
+\end{center}
+
+% =====================================================
+\section{Robot Simulation}
+
+This section is intentionally left blank for integration with the simulation and environment description provided by other team members.
+
+% =====================================================
+\section{Computer Vision}
+
+\subsection{Mathematical Model}
+
+The robot perceives the environment through a sequence of camera images, modeled as a discrete \textbf{luminance (intensity) function}:
+
+\[
+I(x, y, t)
+\]
+
+where \( I \) represents the grayscale luminance at pixel coordinates \( (x, y) \) at time \( t \). This formulation is appropriate since motion estimation relies on intensity variations rather than color information.
+
+Motion in the image is modeled using the \textbf{brightness constancy assumption}, which states that the luminance of a moving point remains constant between consecutive frames:
+
+\[
+I(x, y, t) = I(x + u, y + v, t + 1)
+\]
+
+Assuming small inter-frame motion, a first-order Taylor expansion yields the \textbf{optical flow constraint equation}:
+
+\[
+I_x u + I_y v + I_t = 0
+\]
+
+where:
+\begin{itemize}[noitemsep]
+    \item \( I_x \) and \( I_y \) are spatial intensity gradients,
+    \item \( I_t \) is the temporal intensity derivative,
+    \item \( (u, v) \) represents the pixel displacement between frames.
+\end{itemize}
+
+Spatial gradients are approximated using central differences:
+
+\[
+I_x \approx \frac{I(x+1, y) - I(x-1, y)}{2}, \quad
+I_y \approx \frac{I(x, y+1) - I(x, y-1)}{2}
+\]
+
+The temporal gradient is computed as:
+
+\[
+I_t = I(x, y, t+1) - I(x, y, t)
+\]
+
+Rather than solving for a continuous flow field, motion is estimated by evaluating a discrete set of candidate motion vectors:
+
+\[
+(u, v) \in \{(-1,0), (1,0), (0,-1), (0,1), (0,0)\}
+\]
+
+For each candidate motion, the mean squared error of the optical flow constraint is computed:
+
+\[
+E(u, v) = \frac{1}{N} \sum (I_x u + I_y v + I_t)^2
+\]
+
+The motion vector that minimizes this error is selected as the estimated motion for a given image feature.
+
+% -----------------------------------------------------
+\subsection{Method of Implementing}
+
+Each camera frame is first converted to grayscale and smoothed using a Gaussian filter to reduce noise and stabilize gradient estimation. Rather than processing all pixels, a small number of salient feature points are selected using the \textbf{Shi--Tomasi corner detection method}, implemented via the \textit{Good Features to Track} algorithm. This method identifies pixels with strong intensity variation in two orthogonal directions, making them well suited for motion estimation.
+
+Only a limited number of feature points are retained to reduce computational complexity while preserving robustness. These feature points are extracted from the previous frame and serve as reference locations for local motion analysis.
+
+For each selected feature point, a local \( 5 \times 5 \) image patch is extracted from both the previous and current frames. Spatial and temporal gradients are computed within this region. If the magnitude of the spatial gradients is below a threshold, the feature point is discarded to avoid unstable motion estimates.
+
+The optical flow constraint is evaluated for each candidate motion vector, and the motion direction that minimizes the mean squared error is selected. Feature points exhibiting non-zero motion are classified as belonging to \textbf{dynamic objects}, while points with zero estimated motion are treated as \textbf{static elements} of the environment.
+
+% =====================================================
+\section{Implementation and Demonstration}
+
+The computer vision pipeline operates in real time and follows these steps:
+
+\begin{enumerate}[noitemsep]
+    \item Capture consecutive camera frames
+    \item Convert frames to grayscale and apply Gaussian smoothing
+    \item Select feature points using the Shi--Tomasi method
+    \item Extract local image patches around each feature
+    \item Compute spatial and temporal gradients
+    \item Evaluate candidate motion vectors using mean squared error
+    \item Classify motion direction for each feature point
+\end{enumerate}
+
+Detected feature points are visualized on the camera feed, and motion direction estimates are printed for debugging and verification. Moving objects generate consistent non-zero motion estimates, while static background features exhibit minimal or no detected motion. This behavior demonstrates the system’s ability to distinguish dynamic obstacles using visual information alone.
+
+% =====================================================
+\section{Future Work}
+
+Future work will focus on the next project milestone, which targets \textbf{Simultaneous Localization and Mapping (SLAM)}. In this phase, the robot will construct a map of the environment while simultaneously estimating its own position within that map. Visual information from the camera will be integrated with range-sensing data to enable consistent map construction and pose estimation. The distinction between static and dynamic obstacles developed in this milestone will support SLAM by preventing moving objects from being incorporated into the map.
+
+\end{document}
