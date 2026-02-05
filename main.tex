@@ -29,7 +29,12 @@
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{6pt}
 
+\title{Perception of Cognitive Robots\\Milestone Report I}
+\author{Nutdanai Thipyophat (6538049921)\\Wongsakorn Adirekkittikun (6538177521)\\Withawin Kraipetchara (6538191221)}
+
 \begin{document}
+
+\maketitle
 
 % =====================================================
 \section{Introduction / Overview}
@@ -47,7 +52,30 @@ The computer vision algorithms developed for this milestone are implemented in c
 % =====================================================
 \section{Robot Simulation}
 
-This section is intentionally left blank for integration with the simulation and environment description provided by other team members.
+\subsection{Simulation Environment and Objectives}
+
+The project utilizes the Webots simulation framework to develop and evaluate an autonomous robotic perception system, As shown in Fig.~\ref{fig:webot}. The primary objective of the simulation is to provide a controlled environment in which a mobile robot can perceive its surroundings, avoid obstacles, and ultimately navigate toward a designated goal.
+
+Within the scope of Milestone 1, the simulation is used to validate the effectiveness of the computer vision subsystem by observing how the robot perceives and classifies elements in its environment. This milestone specifically focuses on distinguishing static environmental structures from dynamic entities under controlled conditions.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{image/webot.png}
+    \caption{Simulation setup via Webots.}
+    \label{fig:webot}
+\end{figure}
+
+\subsection{Experimental Setup}
+
+The experimental environment consists of a bounded arena enclosed by walls, with a high-contrast checkerboard floor pattern to support reliable visual feature extraction. The e-puck differential-drive robot is used as the mobile agent, equipped with an onboard monocular camera that provides the sole visual input for perception tasks.
+
+To isolate visual motion cues from robot-induced motion, the robot operates in a stationary observation mode during the initial validation phase. This setup ensures that all detected motion in the camera frame originates from objects in the environment rather than from ego-motion of the robot itself.
+
+\subsection{Simulation Role in Validation}
+
+The simulation enables controlled testing of both static and dynamic objects within the environment. Moving entities, such as mobile obstacles, and stationary structures, such as walls, are introduced to assess the robustness of the perception system. Classification results and diagnostic information are reported in real time through the system console, confirming correct system behavior as objects transition between dynamic and static states.
+
+This simulation framework provides the foundation for subsequent milestones involving mapping, localization, and autonomous navigation.
 
 % =====================================================
 \section{Computer Vision}
@@ -111,13 +139,27 @@ The motion vector that minimizes this error is selected as the estimated motion 
 % -----------------------------------------------------
 \subsection{Method of Implementing}
 
-Each camera frame is first converted to grayscale and smoothed using a Gaussian filter to reduce noise and stabilize gradient estimation. Rather than processing all pixels, a small number of salient feature points are selected using the \textbf{Shi--Tomasi corner detection method}, implemented via the \textit{Good Features to Track} algorithm. This method identifies pixels with strong intensity variation in two orthogonal directions, making them well suited for motion estimation.
+Each camera frame is first converted to grayscale and smoothed using a Gaussian filter to reduce noise and stabilize gradient estimation. Rather than processing all pixels, a small number of salient feature points are selected using the \textbf{Shi--Tomasi corner detection method}, implemented via the \textit{Good Features to Track} algorithm. This method identifies pixels with strong intensity variation in two orthogonal directions, making them well suited for motion estimation, As shown in Fig.~\ref{fig:compare}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{image/compare.png}
+    \caption{Detected feature points via Shi-Tomasi corner detection method.}
+    \label{fig:compare}
+\end{figure}
 
 Only a limited number of feature points are retained to reduce computational complexity while preserving robustness. These feature points are extracted from the previous frame and serve as reference locations for local motion analysis.
 
 For each selected feature point, a local \( 5 \times 5 \) image patch is extracted from both the previous and current frames. Spatial and temporal gradients are computed within this region. If the magnitude of the spatial gradients is below a threshold, the feature point is discarded to avoid unstable motion estimates.
 
-The optical flow constraint is evaluated for each candidate motion vector, and the motion direction that minimizes the mean squared error is selected. Feature points exhibiting non-zero motion are classified as belonging to \textbf{dynamic objects}, while points with zero estimated motion are treated as \textbf{static elements} of the environment.
+The optical flow constraint is evaluated for each candidate motion vector, and the motion direction that minimizes the mean squared error is selected. Feature points exhibiting non-zero motion are classified as belonging to \textbf{dynamic objects}, while points with zero estimated motion are treated as \textbf{static elements} of the environment, As shown in Fig.~\ref{fig:dynamic}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{image/dynamic.png}
+    \caption{Classify between dynamic and static object. With Red as dynamic and Green as static}
+    \label{fig:dynamic}
+\end{figure}
 
 % =====================================================
 \section{Implementation and Demonstration}
